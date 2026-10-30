@@ -1,0 +1,424 @@
+[
+  {
+    "_id": "5e9e4297-b924-4393-a894-eb7633fb2cc4",
+    "id": "5e9e4297-b924-4393-a894-eb7633fb2cc4",
+    "code": "#include <cstring>\nvoid f(char* u) { char b[16]; strcpy(b, u); printf(b); }",
+    "language": "cpp",
+    "overallScore": 15,
+    "scores": {
+      "security": 0,
+      "bestPractices": 20,
+      "maintainability": 30,
+      "errorHandling": 0,
+      "performance": 60,
+      "readability": 50
+    },
+    "summary": "The code snippet exhibits critical security vulnerabilities, specifically an unbounded buffer overflow via `strcpy` and a format string vulnerability via `printf(b)`. Additionally, mandatory header includes (`<cstdio>`) are missing, and input arguments lack `const` correctness. Immediate remediation is required to transition to safe C++ string handling.",
+    "criticalIssues": [
+      {
+        "title": "Buffer Overflow Vulnerability via `strcpy`",
+        "description": "The `strcpy` function performs an unbounded copy from input parameter `u` into fixed-size buffer `b` (16 bytes). If `u` exceeds 15 characters plus the null terminator, it will overflow the stack buffer, causing memory corruption or potential arbitrary code execution.",
+        "severity": "Critical",
+        "line": 2,
+        "recommendation": "Replace C-style buffer copies with modern C++ abstractions like `std::string` or `std::string_view`. If raw buffers are strictly required, use `snprintf` or `strncpy` with explicit size limits."
+      },
+      {
+        "title": "Format String Vulnerability via `printf(b)`",
+        "description": "Passing user-controlled or variable string `b` directly as the format argument to `printf` allows format specifiers (such as `%x`, `%s`, `%n`) to be evaluated. This can leak stack contents or overwrite arbitrary memory locations.",
+        "severity": "Critical",
+        "line": 2,
+        "recommendation": "Always supply a fixed string literal as the format string, e.g., `printf(\"%s\", b);`, or use C++ streams like `std::cout << b;`."
+      }
+    ],
+    "warnings": [
+      {
+        "title": "Missing Header Include",
+        "description": "The function `printf` is used without including its declaring standard library header `<cstdio>`.",
+        "line": 1,
+        "severity": "Warning"
+      },
+      {
+        "title": "Missing Const-Correctness on Parameter",
+        "description": "Parameter `u` is not modified inside function `f` and should be qualified as `const char*` or `std::string_view` to enforce read-only semantics.",
+        "line": 2,
+        "severity": "Warning"
+      }
+    ],
+    "securityAudit": {
+      "risk": "Critical",
+      "injectionRisk": "High",
+      "authenticationStrength": "N/A",
+      "accessControl": "N/A",
+      "secretExposureRisk": "High"
+    },
+    "compliance": {
+      "owasp": "Critical Failure",
+      "pciDss": "Critical Failure",
+      "gdpr": "Needs Improvement"
+    },
+    "proTips": [
+      "Prefer C++ standard abstractions (`std::string`, `std::string_view`) over raw `char` arrays to guarantee automatic memory management and eliminate bounds errors.",
+      "Never pass non-literal strings directly into printf-family functions; always specify explicit format string specifiers or use type-safe modern C++ standard formatting (`std::format` in C++20).",
+      "Enable compiler security flags like `-Wformat-security`, `-Wstack-protector`, and `-D_FORTIFY_SOURCE=2` to catch common C-string misuse at build time."
+    ],
+    "createdAt": "2026-09-10T16:24:18.020Z"
+  },
+  {
+    "_id": "6cb67720-b581-4be8-adb7-14f1d828598c",
+    "id": "6cb67720-b581-4be8-adb7-14f1d828598c",
+    "code": "import os\ndef ping(): os.system(\"ping -c 1 \" + request.args.get(\"host\"))",
+    "language": "python",
+    "overallScore": 10,
+    "scores": {
+      "security": 0,
+      "bestPractices": 10,
+      "maintainability": 20,
+      "errorHandling": 0,
+      "performance": 20,
+      "readability": 40
+    },
+    "summary": "The code contains a critical command injection vulnerability by directly concatenating user input into a system shell command. It lacks input validation, error handling, and proper library usage for network operations. This implementation is highly insecure and should be completely refactored.",
+    "criticalIssues": [
+      {
+        "title": "Command Injection Vulnerability",
+        "description": "The use of os.system with unsanitized user input allows an attacker to execute arbitrary shell commands on the host system.",
+        "severity": "Critical",
+        "line": 2,
+        "recommendation": "Do not use os.system with user input. Use the 'subprocess' module with 'shell=False' and pass arguments as a list, or preferably, use a dedicated Python library like 'ping3' or 'scapy'."
+      }
+    ],
+    "warnings": [
+      {
+        "title": "Missing Input Validation",
+        "description": "The host parameter is used without verifying if it is a valid IP address or hostname, which could lead to unexpected behavior or further exploitation.",
+        "line": 2,
+        "severity": "Warning"
+      },
+      {
+        "title": "Undefined Variable",
+        "description": "The 'request' object is used but not imported or defined within the scope of the function.",
+        "line": 2,
+        "severity": "Warning"
+      }
+    ],
+    "securityAudit": {
+      "risk": "Critical",
+      "injectionRisk": "High",
+      "authenticationStrength": "N/A",
+      "accessControl": "N/A",
+      "secretExposureRisk": "Low"
+    },
+    "compliance": {
+      "owasp": "Critical Failure",
+      "pciDss": "Critical Failure",
+      "gdpr": "Needs Improvement"
+    },
+    "proTips": [
+      "Always treat user input as untrusted and validate it against a strict allow-list (e.g., regex for IP addresses).",
+      "Prefer high-level Python libraries over shell execution to avoid shell-related security pitfalls.",
+      "If you must use subprocess, always use the list-based argument format and set shell=False to prevent command injection."
+    ],
+    "createdAt": "2026-09-10T16:24:08.766Z"
+  },
+  {
+    "_id": "d743cd1e-ea5d-4dad-9331-f210ca254c45",
+    "id": "d743cd1e-ea5d-4dad-9331-f210ca254c45",
+    "code": "const express = require(\"express\");\nconst mysql = require(\"mysql\");\nconst DB_SECRET = \"12345\";\napp.get(\"/u\", (req, res) => db.query(\"SELECT * FROM u WHERE name='\" + req.query.name + \"'\"));",
+    "language": "javascript",
+    "overallScore": 10,
+    "scores": {
+      "security": 0,
+      "bestPractices": 10,
+      "maintainability": 20,
+      "errorHandling": 0,
+      "performance": 20,
+      "readability": 30
+    },
+    "summary": "The provided code contains a critical SQL injection vulnerability and hardcoded credentials. It lacks basic error handling, proper database connection management, and follows insecure coding practices that expose the application to immediate compromise.",
+    "criticalIssues": [
+      {
+        "title": "SQL Injection Vulnerability",
+        "description": "The code concatenates user input directly into a SQL query string, allowing attackers to execute arbitrary SQL commands.",
+        "severity": "Critical",
+        "line": 4,
+        "recommendation": "Use parameterized queries (prepared statements) provided by the mysql library: db.query('SELECT * FROM u WHERE name = ?', [req.query.name], callback);"
+      },
+      {
+        "title": "Hardcoded Secret",
+        "description": "Sensitive credentials are stored in plain text within the source code, which is a major security risk if the code is committed to version control.",
+        "severity": "Critical",
+        "line": 3,
+        "recommendation": "Use environment variables (e.g., process.env.DB_SECRET) or a dedicated secret management service."
+      },
+      {
+        "title": "Missing Error Handling",
+        "description": "The database query is executed without a callback or promise handling, meaning errors will crash the process or leave the request hanging.",
+        "severity": "Critical",
+        "line": 4,
+        "recommendation": "Implement a callback function or use async/await with try-catch blocks to handle database errors gracefully."
+      }
+    ],
+    "warnings": [
+      {
+        "title": "Undefined Variables",
+        "description": "The 'app' and 'db' variables are used but not defined in the provided snippet.",
+        "line": 4,
+        "severity": "Warning"
+      }
+    ],
+    "securityAudit": {
+      "risk": "Critical",
+      "injectionRisk": "High",
+      "authenticationStrength": "Poor",
+      "accessControl": "Poor",
+      "secretExposureRisk": "High"
+    },
+    "compliance": {
+      "owasp": "Critical Failure",
+      "pciDss": "Critical Failure",
+      "gdpr": "Critical Failure"
+    },
+    "proTips": [
+      "Always use parameterized queries or an ORM/Query Builder to prevent SQL injection.",
+      "Never store secrets in source code; use a .env file and add it to .gitignore.",
+      "Implement robust logging and error handling to ensure your application remains stable under failure conditions."
+    ],
+    "createdAt": "2026-09-10T16:24:05.239Z"
+  },
+  {
+    "_id": "e061cd1e-8b53-4419-8cc3-17539dab61b2",
+    "id": "e061cd1e-8b53-4419-8cc3-17539dab61b2",
+    "code": "void test(char* s) { char b[16]; strcpy(b, s); printf(b); }",
+    "language": "cpp",
+    "overallScore": 15,
+    "scores": {
+      "security": 0,
+      "bestPractices": 15,
+      "maintainability": 20,
+      "errorHandling": 0,
+      "performance": 70,
+      "readability": 40
+    },
+    "summary": "The code contains severe, classic C/C++ security vulnerabilities including a stack-based buffer overflow and a format string injection vulnerability. These issues allow attackers to crash the application, read sensitive stack data, or execute arbitrary code. Immediate remediation is required to use bounds-checked string copying and proper format specifiers.",
+    "criticalIssues": [
+      {
+        "title": "Stack-Based Buffer Overflow",
+        "description": "The function uses 'strcpy' to copy an untrusted string 's' into a fixed-sized 16-byte stack buffer 'b' without checking length. If 's' exceeds 15 characters, it overwrites adjacent stack memory, leading to crashes or remote code execution (RCE).",
+        "severity": "Critical",
+        "line": 1,
+        "recommendation": "Replace 'strcpy' with safe bounded copying methods, or preferably use 'std::string' in C++. For C-style strings, use 'strncpy' or 'snprintf(b, sizeof(b), \"%s\", s);'."
+      },
+      {
+        "title": "Format String Vulnerability",
+        "description": "Passing user-controlled input directly as the format argument in 'printf(b)' allows format string specifiers (e.g., %x, %s, %n) to read from or write to arbitrary memory locations, enabling memory disclosure or arbitrary code execution.",
+        "severity": "Critical",
+        "line": 1,
+        "recommendation": "Never pass user-supplied variables directly as the format string. Use 'printf(\"%s\", b);' or 'fputs(b, stdout);'."
+      }
+    ],
+    "warnings": [
+      {
+        "title": "Missing Const Qualifier",
+        "description": "The input pointer parameter 'char* s' is not modified by the function and should be declared as 'const char* s' to enforce read-only semantics and improve const-correctness.",
+        "line": 1,
+        "severity": "Warning"
+      },
+      {
+        "title": "Missing Standard Library Headers",
+        "description": "The code uses 'strcpy' and 'printf' without including <cstring> (or <string.h>) and <cstdio> (or <stdio.h>).",
+        "line": 1,
+        "severity": "Warning"
+      }
+    ],
+    "securityAudit": {
+      "risk": "Critical",
+      "injectionRisk": "High",
+      "authenticationStrength": "N/A",
+      "accessControl": "N/A",
+      "secretExposureRisk": "High"
+    },
+    "compliance": {
+      "owasp": "Critical Failure",
+      "pciDss": "Critical Failure",
+      "gdpr": "Needs Improvement"
+    },
+    "proTips": [
+      "In C++, prefer idiomatic RAII types like 'std::string' or 'std::string_view' over raw char arrays and C-style string functions.",
+      "Enable compiler warnings (-Wall -Wextra -Wformat-security) and stack protection flags (-fstack-protector-all) to catch these flaws during compilation.",
+      "Always specify format specifiers when using 'printf' family functions (e.g., 'printf(\"%s\", str)')."
+    ],
+    "createdAt": "2026-09-10T16:22:40.627Z"
+  },
+  {
+    "_id": "d6656ac8-4378-4bdd-88e3-b17cb1d1f099",
+    "id": "d6656ac8-4378-4bdd-88e3-b17cb1d1f099",
+    "code": "const secret = \"12345\";\napp.get(\"/user\", (req, res) => db.query(\"SELECT * FROM u WHERE id=\" + req.query.id));",
+    "language": "javascript",
+    "overallScore": 15,
+    "scores": {
+      "security": 0,
+      "bestPractices": 20,
+      "maintainability": 30,
+      "errorHandling": 0,
+      "performance": 40,
+      "readability": 60
+    },
+    "summary": "The code exhibits severe security vulnerabilities, including direct SQL injection via unformatted query parameters and hardcoded secrets. Additionally, the route handler lacks error handling and fails to send a response back to the client, leading to hanging HTTP requests.",
+    "criticalIssues": [
+      {
+        "title": "SQL Injection Vulnerability",
+        "description": "User input from 'req.query.id' is directly concatenated into an SQL string without sanitization. An attacker can manipulate the query string to access, alter, or delete database records.",
+        "severity": "Critical",
+        "line": 2,
+        "recommendation": "Use parameterized queries (prepared statements) instead of string concatenation, e.g., db.query('SELECT * FROM u WHERE id = ?', [req.query.id])."
+      },
+      {
+        "title": "Hardcoded Secret",
+        "description": "A secret key or password is written directly in the source code. Storing credentials in plaintext in source files exposes them to anyone with code repository access.",
+        "severity": "Critical",
+        "line": 1,
+        "recommendation": "Move secrets to environment variables (e.g., process.env.SECRET) and manage them using a configuration library like dotenv or a secret manager."
+      }
+    ],
+    "warnings": [
+      {
+        "title": "Missing Route Response and Unhandled Promise",
+        "description": "The route handler executes a database query but does not send a response (e.g., res.json(...)) back to the HTTP client, causing client requests to hang indefinitely. It also lacks try/catch or promise error handling.",
+        "line": 2,
+        "severity": "Warning"
+      }
+    ],
+    "securityAudit": {
+      "risk": "Critical",
+      "injectionRisk": "High",
+      "authenticationStrength": "N/A",
+      "accessControl": "N/A",
+      "secretExposureRisk": "High"
+    },
+    "compliance": {
+      "owasp": "Critical Failure",
+      "pciDss": "Critical Failure",
+      "gdpr": "Needs Improvement"
+    },
+    "proTips": [
+      "Always use parameterized queries or an ORM (like Prisma or TypeORM) to prevent SQL injection vulnerabilities.",
+      "Never check secrets or API keys into version control; always load sensitive values from environment variables.",
+      "Ensure every Express route handler returns an explicit HTTP response and handles asynchronous errors gracefully."
+    ],
+    "createdAt": "2026-09-10T16:22:33.766Z"
+  },
+  {
+    "_id": "8951c961-bcd6-448c-a9ca-33d8acc35379",
+    "id": "8951c961-bcd6-448c-a9ca-33d8acc35379",
+    "code": "\nconst express = require(\"express\");\nconst mysql = require(\"mysql\");\nconst app = express();\nconst DB_SECRET_KEY = \"SUPER_SECRET_PRODUCTION_KEY_12345\";\napp.post(\"/api/login\", (req, res) => {\n  const { username, password } = req.body;\n  const query = \"SELECT * FROM users WHERE username = '\" + username + \"' AND password = '\" + password + \"'\";\n  db.query(query, (err, results) => {\n    if (err) return res.status(500).json({ error: err.message, stack: err.stack });\n    if (results.length > 0) res.json({ success: true, token: DB_SECRET_KEY, user: results[0] });\n    else res.status(401).json({ error: \"Invalid credentials\" });\n  });\n});\n",
+    "language": "javascript",
+    "overallScore": 18,
+    "scores": {
+      "security": 5,
+      "bestPractices": 10,
+      "maintainability": 30,
+      "errorHandling": 15,
+      "performance": 40,
+      "readability": 60
+    },
+    "summary": "The snippet contains severe security flaws, including high-risk SQL injection, hardcoded production credentials, plaintext password checks, and full error stack leakage. Immediate refactoring with parameterized queries and secure password hashing is required before deployment.",
+    "criticalIssues": [
+      {
+        "title": "SQL Injection Vulnerability",
+        "description": "User inputs `username` and `password` are directly concatenated into the SQL query string. An attacker can craft malicious inputs to alter the database query, bypass authentication, or exfiltrate database contents.",
+        "severity": "Critical",
+        "line": 7,
+        "recommendation": "Use parameterized queries (prepared statements): `db.query('SELECT * FROM users WHERE username = ?', [username], ...)`."
+      },
+      {
+        "title": "Hardcoded Production Secret Key",
+        "description": "Storing secrets directly in code exposes them in version control and source control repositories. Reusing a static string as an authentication token compromises user authorization.",
+        "severity": "Critical",
+        "line": 4,
+        "recommendation": "Load secrets from environment variables using `process.env.DB_SECRET_KEY` and issue signed dynamic tokens (e.g., JWT) upon login."
+      },
+      {
+        "title": "Plaintext Password Querying",
+        "description": "Checking passwords directly inside the SQL query indicates passwords are stored as plain text, violating basic data protection standards.",
+        "severity": "Critical",
+        "line": 7,
+        "recommendation": "Store salted password hashes using bcrypt or Argon2, fetch the user by username, and verify the password using `bcrypt.compare()`."
+      }
+    ],
+    "warnings": [
+      {
+        "title": "Information Disclosure via Stack Trace Leakage",
+        "description": "Returning raw `err.message` and `err.stack` in HTTP responses leaks sensitive system and database infrastructure details to clients.",
+        "line": 9,
+        "severity": "Warning"
+      },
+      {
+        "title": "Missing Body Parsing Middleware",
+        "description": "Accessing `req.body` without applying `express.json()` middleware will lead to runtime runtime exceptions as `req.body` will be undefined.",
+        "line": 6,
+        "severity": "Warning"
+      }
+    ],
+    "securityAudit": {
+      "risk": "Critical",
+      "injectionRisk": "High",
+      "authenticationStrength": "Poor",
+      "accessControl": "Poor",
+      "secretExposureRisk": "High"
+    },
+    "compliance": {
+      "owasp": "Critical Failure",
+      "pciDss": "Critical Failure",
+      "gdpr": "Critical Failure"
+    },
+    "proTips": [
+      "Always use parameterized queries or an ORM like Prisma or Sequelize to neutralize SQL Injection entirely.",
+      "Hash passwords securely with bcrypt or Argon2 before saving them to the database.",
+      "Manage configuration and application secrets outside the source code using environment variables and packages like `dotenv`."
+    ],
+    "createdAt": "2026-09-10T16:17:20.538Z"
+  },
+  {
+    "_id": "71176efe-3dda-4718-9e90-4ef018498e32",
+    "id": "71176efe-3dda-4718-9e90-4ef018498e32",
+    "code": "function add(a, b) {\n  return a + b;\n}",
+    "language": "javascript",
+    "overallScore": 88,
+    "scores": {
+      "security": 100,
+      "bestPractices": 80,
+      "maintainability": 90,
+      "errorHandling": 70,
+      "performance": 100,
+      "readability": 100
+    },
+    "summary": "The provided code is clean, minimalist, and performs basic addition accurately. However, because JavaScript is dynamically typed, the function does not validate input types, which can lead to unexpected string concatenation or `NaN` outputs when unexpected argument types are passed.",
+    "criticalIssues": [],
+    "warnings": [
+      {
+        "title": "Missing Input Type Validation",
+        "description": "The function assumes both `a` and `b` are numbers. Passing non-number arguments (such as strings or undefined) will cause implicit type coercion (e.g., `add('1', 2)` returns `'12'`) or return `NaN` without throwing a helpful error.",
+        "line": 2,
+        "severity": "Warning"
+      }
+    ],
+    "securityAudit": {
+      "risk": "Low",
+      "injectionRisk": "Low",
+      "authenticationStrength": "N/A",
+      "accessControl": "N/A",
+      "secretExposureRisk": "Low"
+    },
+    "compliance": {
+      "owasp": "N/A",
+      "pciDss": "N/A",
+      "gdpr": "N/A"
+    },
+    "proTips": [
+      "Consider adopting TypeScript or JSDoc annotations (`@param {number} a`, `@param {number} b`) to enforce type checking during development.",
+      "If this function handles untrusted runtime inputs, add explicitly typed checks like `typeof a === 'number'` to prevent subtle bugs.",
+      "Add unit tests to cover edge cases such as missing parameters, negative numbers, floating-point precision issues, and non-numeric arguments."
+    ],
+    "createdAt": "2026-09-10T16:16:55.225Z"
+  }
+]

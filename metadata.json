@@ -1,0 +1,6 @@
+{
+  "name": "ReviewMyCode AI",
+  "description": "AI Code Reviewer web application with multi-language code analysis, security auditing, automatic code fixes, and code explanations powered by Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
